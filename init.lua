@@ -29,22 +29,16 @@ Inspirée
 	
 Codé par Jat sous licence GPL v3 ou superieur
 Graphisme par Onyx sous WTFPL
-
-
 ]]--
 
 function Colored_Block_Create(ModName, SubName, NodeLink, BlockDeBase,Variable)
---function Colored_Block_Create(mod, TypeDeBlock, BlockDeBase,Variable)
-
-	--if type(mod) == "string" and type(TypeDeBlock) == "string" then
-	--	mod = {mod}
-	--	TypeDeBlock = {TypeDeBlock}
-	--end
 
 	local Couper = Variable.moreblocks and minetest.global_exists("moreblocks")
 	local Letters = Variable.letters and minetest.global_exists("letters")
 	local AngledWalls = Variable.angledwalls and minetest.global_exists("angledwalls")
 	
+	
+	BlockDeBase.groups = table.copy(minetest.registered_items[NodeLink[1]].groups)
 	BlockDeBase.groups.ud_param2_colorable = 1
 	
 	-- Ajoute du groups auquelle il appartien si ce n est pas deja fait
@@ -62,22 +56,6 @@ function Colored_Block_Create(ModName, SubName, NodeLink, BlockDeBase,Variable)
 		BlockDeBase.airbrush_replacement_node = ModName..":"..SubName
 	end
 
-	
-	if not Couper then
-		minetest.register_lbm({
-			name = ":"..ModName..":"..SubName.."_".."extended",
-			label = "Convert",
-			run_at_every_load = true,
-			nodenames = NodeLink,
-			action = function(pos, node)
-				if node.param2 ~= 240 then
-					minetest.swap_node(pos, {name = node.name, param2 = 240})
-					minetest.get_meta(pos):set_int("palette_index", 240)
-				end
-			end
-		})
-	end
-		
 	for _,Node in pairs(NodeLink) do
 		minetest.override_item(Node, {
 			paramtype = "light",
@@ -97,6 +75,19 @@ function Colored_Block_Create(ModName, SubName, NodeLink, BlockDeBase,Variable)
 	Colored_Block.paramtype = "light"
 	
 	if not Couper then
+		minetest.register_lbm({
+			name = ":"..ModName..":"..SubName.."_".."extended",
+			label = "Convert",
+			run_at_every_load = true,
+			nodenames = NodeLink,
+			action = function(pos, node)
+				if node.param2 ~= 240 then
+					minetest.swap_node(pos, {name = node.name, param2 = 240})
+					minetest.get_meta(pos):set_int("palette_index", 240)
+				end
+			end
+		})
+	
 		minetest.register_node(":"..ModName..":"..SubName, Colored_Block)
 	end
 	
@@ -183,14 +174,16 @@ function Colored_Block_Create(ModName, SubName, NodeLink, BlockDeBase,Variable)
 								"NEUTRAL_NODE",
 								"MAIN_DYE"
 							}
-						})	
-
+						})
+						
+						local StairsPlusGroups = table.copy(minetest.registered_items[ModName..":"..typenode.."_"..SubName.."_grey"..alternate].groups)
+						
 						minetest.override_item(name, {
 							on_construct = unifieddyes.on_construct,
 							paramtype2 = "colorfacedir",
 							palette = "unifieddyes_palette_greys.png",
 							airbrush_replacement_node = ModName..":"..typenode.."_"..SubName.."_grey"..alternate,
-							groups = Colored_Block_Cut.groups,
+							groups = StairsPlusGroups,
 						})
 					end
 				end
@@ -223,11 +216,8 @@ function Colored_Block_Create(ModName, SubName, NodeLink, BlockDeBase,Variable)
 					}
 				})	
 			
-			
 				local name = prefix..NameNode
-				
 
-				
 				minetest.override_item(name, {
 					on_construct = unifieddyes.on_construct,
 					paramtype2 = "colorfacedir",
